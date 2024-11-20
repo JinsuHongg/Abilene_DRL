@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "abilene-venv"
+version = "0.1.0"
+description = ""
+authors = ["Jinsu Hong <jhong36@student.gsu.edu>"]
+readme = "README.md"
+packages = [{include = "abilene_venv"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
