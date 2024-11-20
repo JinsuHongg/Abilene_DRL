@@ -23,16 +23,18 @@ class Environment(object):
         self.link_capacities = self.total_info.link_capacities
         self.link_weights = self.total_info.link_weights
   
-
     def __len__(self):
         return len(self.traffic_matrices)
 
     def __getitem__(self, idx):
-        demand = self.traffic_matrices[idx][:]
+        demand = self.traffic_matrices[idx][0][:] # TM type: 0
         return {"topology": self.total_info.DG, "demand": torch.tensor(demand, dtype=torch.float)}
     
     def compute_link_utilization(self, channel):
-        self.utilization = np.zeros(self.num_link + 1)
+        # change 100bytes/5min to kilobits/sec, 300 = (5min x 60sec)
+        self.traffic_matrices = self.traffic_matrices * 8 * 100 / (1024 * 300)
+
+        self.traffic = np.zeros(self.num_link)
         for src in range(self.num_node):
             for dst in range(self.num_node):
                 traffic = self.traffic_matrices[0][channel][src, dst] # time interval, channel, source, destination
@@ -40,18 +42,20 @@ class Environment(object):
                     path = nx.shortest_path(self.total_info.DG, src, dst, weight='weight')
                     for i in range(len(path) - 1):
                         link = self.link_sd_to_idx[(path[i], path[i + 1])]
-                        self.utilization[link] += (traffic) # because of 5min interval (5min x 60sec)
-        return self.utilization / (self.link_capacities)
+                        self.traffic[link] += (traffic) # because of 5min interval (5min x 60sec)
+        self.traffic
+        # return self.utilization
     
     def calculate_total_traveling_time(self):
         total_traveling_time = 0
-        for i, utilization in enumerate(self.utilization):
-            if utilization < 1:  # Avoid division by zero
-                link_delay = 1 / (1 - utilization)  # Delay proportional to 1/(1 - utilization)
-            else:
-                link_delay = float('inf')  # Highly congested link
-            traffic = self.utilization[i+1] * self.link_capacities[i+1]
-            total_traveling_time += traffic * link_delay  # Weight delay by traffic volume
+        for i, trf in enumerate(self.traffic):
+            # if trf < 1:  # Avoid division by zero
+            link_delay = 1 / (self.link_capacities[i] - trf)  # Delay proportional to 1/(1 - utilization)
+            # else:
+                # print(i, utilization)
+                # link_delay = float('inf')  # Highly congested link
+            # traffic = self.utilization[i] * self.link_capacities[i]
+            total_traveling_time += link_delay  # Weight delay by traffic volume
         
         return total_traveling_time
 

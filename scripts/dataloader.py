@@ -27,8 +27,8 @@ class Topology_Traffic():
         self.DG = nx.DiGraph()
         self.link_idx_to_sd = {}
         self.link_sd_to_idx = {}
-        self.link_capacities = np.empty((link.shape[0]+1))
-        self.link_weights = np.empty((link.shape[0]+1))
+        self.link_capacities = np.empty((link.shape[0]))
+        self.link_weights = np.empty((link.shape[0]))
 
         for each_info in link:
             start, destination, s, d, i, c, w = each_info
@@ -67,8 +67,8 @@ class Topology_Traffic():
                 channel = v % 5
                 row = int( ((v - channel) / 5) // 12 )
                 column = int( ((v - channel) / 5) % 12 )
-                # change 100bytes/5min to kilobits/sec, and 5 min interval, 300 = (5min x 60sec)
-                matrix[channel][row, column] = float(volumes[v]) * 8 * 100 / (1024 * 300) 
+                if row != column:
+                    matrix[channel][row, column] = float(volumes[v]) 
             
             self.traffic_matrices.append(matrix)
 
