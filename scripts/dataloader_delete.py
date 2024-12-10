@@ -34,18 +34,15 @@ class Topology_Traffic():
             start, destination, s, d, i, c, w = each_info
             self.link_idx_to_sd[int(i)] = (int(s),int(d))
             self.link_sd_to_idx[(int(s),int(d))] = int(i)
-            self.link_capacities[int(i)] = float(c)
+            self.link_capacities[int(i)] = float(c) / (10**(4)) # scaling 9920000 to 922 because of the mininet limits
             self.link_weights[int(i)] = int(w)
             self.DG.add_weighted_edges_from([(int(s), int(d), int(w))])
 
         assert len(self.DG.nodes()) == self.num_node and len(self.DG.edges()) == self.num_link
 
-        self.Load_traffic()
-
-
-    def Load_traffic(self):
+    def Load_traffic(self, filename: str):
         
-        self.traffic_file = glob.glob(self.path + '/data/X01*') 
+        self.traffic_file = glob.glob(self.path + f'/data/{filename}*') 
         assert len(self.traffic_file) > 0
 
         print('Loading traffic matrices...', self.traffic_file[0])
@@ -74,7 +71,9 @@ class Topology_Traffic():
 
         f.close()
         
-        self.traffic_matrices = np.array(self.traffic_matrices)
-        self.tms_shape = self.traffic_matrices.shape
-        self.tm_cnt = self.tms_shape[0]
-        print(f'Traffic matrices dims: {self.tms_shape}')
+        # change 100bytes/5min to kilobits/sec, 300 = (5min x 60sec)
+        self.traffic_matrices = np.array(self.traffic_matrices) * 8 * 100 / (1024 * 300)
+
+        # self.tms_shape = self.traffic_matrices.shape
+        # self.tm_cnt = self.tms_shape[0]
+        # print(f'Traffic matrices dims: {self.tms_shape}')

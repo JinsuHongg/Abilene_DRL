@@ -3,6 +3,10 @@
 data/
 test/
 
+# etc
+*.tar.xz
+*.ods
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

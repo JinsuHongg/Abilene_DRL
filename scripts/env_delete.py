@@ -3,8 +3,7 @@ import numpy as np
 import networkx as nx
 from .dataloader import Topology_Traffic
 
-
-class Environment(object):
+class Environment():
     def __init__(self):
         
         self.total_info = Topology_Traffic()
@@ -49,12 +48,11 @@ class Environment(object):
     def calculate_total_traveling_time(self):
         total_traveling_time = 0
         for i, trf in enumerate(self.traffic):
-            # if trf < 1:  # Avoid division by zero
-            link_delay = 1 / (self.link_capacities[i] - trf)  # Delay proportional to 1/(1 - utilization)
-            # else:
-                # print(i, utilization)
-                # link_delay = float('inf')  # Highly congested link
-            # traffic = self.utilization[i] * self.link_capacities[i]
+            remaining_capacity = self.link_capacities[i] - trf
+            if remaining_capacity <= 0:
+                link_delay = 1e6  # Assign high delay for congested links
+            else:
+                link_delay = 1 / (remaining_capacity + 1e-6)
             total_traveling_time += link_delay  # Weight delay by traffic volume
         
         return total_traveling_time
